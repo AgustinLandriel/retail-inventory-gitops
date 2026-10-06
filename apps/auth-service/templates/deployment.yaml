@@ -20,7 +20,7 @@ spec:
       securityContext:
         fsGroup: 1000
       containers:
-        - image: ipedrazas/docmock
+        - image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
           name: auth-service
           resources:
             requests:
