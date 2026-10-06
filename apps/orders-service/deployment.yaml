@@ -1,0 +1,77 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: orders-service
+  labels:
+    name: orders-service
+  namespace: repone
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: orders-service
+  template:
+    metadata:
+      labels:
+        app: orders-service
+    spec:
+      securityContext:
+        fsGroup: 1000
+      containers:
+        - image: ipedrazas/docmock
+          name: orders-service
+          resources:
+            requests:
+              cpu: "50m"
+              memory: "64Mi"
+            limits:
+              cpu: "200m"
+              memory: "256Mi"
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: 3003
+            initialDelaySeconds: 15
+            timeoutSeconds: 5
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: 3003
+            initialDelaySeconds: 10
+            timeoutSeconds: 5
+          ports:
+            - containerPort: 3003
+              name: orders-service
+          volumeMounts:
+            - name: data
+              mountPath: /app/data
+          env:
+            - name: PORT
+              value: "3003"
+            - name: JWT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: orders-service-secret
+                  key: JWT_SECRET
+
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: orders-service-pvc
+
+---
+kind: Service
+apiVersion: v1
+metadata:
+  name: orders-service
+  namespace: repone
+spec:
+  selector:
+    app: orders-service
+  type: ClusterIP
+  ports:
+    - name: orders-service
+      port: 3003
+      targetPort: 3003
