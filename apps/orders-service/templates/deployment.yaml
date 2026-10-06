@@ -1,9 +1,9 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: orders-service
+  name: {{ .Values.name }}
   labels:
-    name: orders-service
+    name: {{ .Values.name }}
   namespace: repone
 spec:
   replicas: 1
@@ -11,17 +11,17 @@ spec:
     type: Recreate
   selector:
     matchLabels:
-      app: orders-service
+      app: {{ .Values.name }}
   template:
     metadata:
       labels:
-        app: orders-service
+        app: {{ .Values.name }}
     spec:
       securityContext:
         fsGroup: 1000
       containers:
-        - image: ipedrazas/docmock
-          name: orders-service
+        - image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          name: {{ .Values.name }}
           resources:
             requests:
               cpu: "50m"
@@ -32,24 +32,24 @@ spec:
           livenessProbe:
             httpGet:
               path: /healthz
-              port: 3003
+              port: {{ .Values.port }}
             initialDelaySeconds: 15
             timeoutSeconds: 5
           readinessProbe:
             httpGet:
               path: /healthz
-              port: 3003
+              port: {{ .Values.port }}
             initialDelaySeconds: 10
             timeoutSeconds: 5
           ports:
-            - containerPort: 3003
-              name: orders-service
+            - containerPort: {{ .Values.port }}
+              name: {{ .Values.name }}
           volumeMounts:
             - name: data
               mountPath: /app/data
           env:
             - name: PORT
-              value: "3003"
+              value: "{{ .Values.port }}"
             - name: JWT_SECRET
               valueFrom:
                 secretKeyRef:
@@ -61,19 +61,19 @@ spec:
       volumes:
         - name: data
           persistentVolumeClaim:
-            claimName: orders-service-pvc
+            claimName: {{ .Values.name }}-pvc
 
 ---
 kind: Service
 apiVersion: v1
 metadata:
-  name: orders-service
+  name: {{ .Values.name }}
   namespace: repone
 spec:
   selector:
-    app: orders-service
+    app: {{ .Values.name }}
   type: ClusterIP
   ports:
-    - name: orders-service
-      port: 3003
-      targetPort: 3003
+    - name: {{ .Values.name }}
+      port: {{ .Values.port }}
+      targetPort: {{ .Values.port }}
