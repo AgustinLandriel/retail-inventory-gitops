@@ -1,0 +1,77 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: catalog-service
+  labels:
+    name: catalog-service
+  namespace: repone
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: catalog-service
+  template:
+    metadata:
+      labels:
+        app: catalog-service
+    spec:
+      securityContext:
+        fsGroup: 1000
+      containers:
+        - image: ipedrazas/docmock
+          name: catalog-service
+          resources:
+            requests:
+              cpu: "50m"
+              memory: "64Mi"
+            limits:
+              cpu: "200m"
+              memory: "256Mi"
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: 3002
+            initialDelaySeconds: 15
+            timeoutSeconds: 5
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: 3002
+            initialDelaySeconds: 10
+            timeoutSeconds: 5
+          ports:
+            - containerPort: 3002
+              name: catalog-service
+          volumeMounts:
+            - name: data
+              mountPath: /app/data
+          env:
+            - name: PORT
+              value: "3002"
+            - name: JWT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: catalog-service-secret
+                  key: JWT_SECRET
+
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: catalog-service-pvc
+
+---
+kind: Service
+apiVersion: v1
+metadata:
+  name: catalog-service
+  namespace: repone
+spec:
+  selector:
+    app: catalog-service
+  type: ClusterIP
+  ports:
+    - name: catalog-service
+      port: 3002
+      targetPort: 3002
