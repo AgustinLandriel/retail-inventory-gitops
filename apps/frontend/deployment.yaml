@@ -1,0 +1,59 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: frontend
+  labels:
+    name: frontend
+  namespace: repone
+spec:
+  replicas: 1
+  strategy:
+    type: RollingUpdate
+  selector:
+    matchLabels:
+      app: frontend
+  template:
+    metadata:
+      labels:
+        app: frontend
+    spec:
+      containers:
+        - image: ipedrazas/docmock
+          name: frontend
+          resources:
+            requests:
+              cpu: "50m"
+              memory: "64Mi"
+            limits:
+              cpu: "200m"
+              memory: "256Mi"
+          livenessProbe:
+            httpGet:
+              path: /
+              port: 80
+            initialDelaySeconds: 10
+            timeoutSeconds: 5
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 80
+            initialDelaySeconds: 5
+            timeoutSeconds: 5
+          ports:
+            - containerPort: 80
+              name: frontend
+
+---
+kind: Service
+apiVersion: v1
+metadata:
+  name: frontend
+  namespace: repone
+spec:
+  selector:
+    app: frontend
+  type: ClusterIP
+  ports:
+    - name: frontend
+      port: 80
+      targetPort: 80

@@ -53,8 +53,10 @@ spec:
             - name: JWT_SECRET
               valueFrom:
                 secretKeyRef:
-                  name: orders-service-secret
+                  name: auth-service-secret
                   key: JWT_SECRET
+            - name: CATALOG_SERVICE_URL
+              value: "http://catalog-service:3002"
 
       volumes:
         - name: data

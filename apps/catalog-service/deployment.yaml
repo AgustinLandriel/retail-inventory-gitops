@@ -53,7 +53,7 @@ spec:
             - name: JWT_SECRET
               valueFrom:
                 secretKeyRef:
-                  name: catalog-service-secret
+                  name: auth-service-secret
                   key: JWT_SECRET
 
       volumes:
