@@ -1,9 +1,9 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: auth-service
+  name: {{ .Values.name }}
   labels:
-    name: auth-service
+    name: {{ .Values.name }}
   namespace: repone
 spec:
   replicas: 1
@@ -11,17 +11,17 @@ spec:
     type: Recreate
   selector:
     matchLabels:
-      app: auth-service
+      app: {{ .Values.name }}
   template:
     metadata:
       labels:
-        app: auth-service
+        app: {{ .Values.name }}
     spec:
       securityContext:
         fsGroup: 1000
       containers:
         - image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
-          name: auth-service
+          name: {{ .Values.name }}
           resources:
             requests:
               cpu: "50m"
@@ -32,46 +32,46 @@ spec:
           livenessProbe:
             httpGet:
               path: /healthz
-              port: 3001
+              port: {{ .Values.port }}
             initialDelaySeconds: 15
             timeoutSeconds: 5
           readinessProbe:
             httpGet:
               path: /healthz
-              port: 3001
+              port: {{ .Values.port }}
             initialDelaySeconds: 10
             timeoutSeconds: 5
           ports:
-            - containerPort: 3001
-              name: auth-service
+            - containerPort: {{ .Values.port }}
+              name: {{ .Values.name }}
           volumeMounts:
             - name: data
               mountPath: /app/data
           env:
             - name: PORT
-              value: "3001"
+              value: "{{ .Values.port }}"
             - name: JWT_SECRET
               valueFrom:
                 secretKeyRef:
-                  name: auth-service-secret
+                  name: {{ .Values.name }}-secret
                   key: JWT_SECRET
 
       volumes:
         - name: data
           persistentVolumeClaim:
-            claimName: auth-service-pvc
+            claimName: {{ .Values.name }}-pvc
 
 ---
 kind: Service
 apiVersion: v1
 metadata:
-  name: auth-service
+  name: {{ .Values.name }}
   namespace: repone
 spec:
   selector:
-    app: auth-service
+    app: {{ .Values.name }}
   type: ClusterIP
   ports:
-    - name: auth-service
-      port: 3001
-      targetPort: 3001
+    - name: {{ .Values.name }}
+      port: {{ .Values.port }}
+      targetPort: {{ .Values.port }}

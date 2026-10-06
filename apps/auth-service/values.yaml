@@ -1,3 +1,5 @@
+name: auth-service
+port: 3001
 image:
   repository: 325503636955.dkr.ecr.us-east-2.amazonaws.com/repone-auth-service
   tag: "latest"

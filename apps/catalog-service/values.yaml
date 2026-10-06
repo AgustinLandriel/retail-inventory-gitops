@@ -1,0 +1,5 @@
+name: catalog-service
+port: 3002
+image:
+  repository: 325503636955.dkr.ecr.us-east-2.amazonaws.com/repone-catalog-service
+  tag: "latest"
