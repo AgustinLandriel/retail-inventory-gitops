@@ -32,24 +32,24 @@ spec:
           livenessProbe:
             httpGet:
               path: /healthz
-              port: {{ .Values.port}}
+              port: {{ .Values.port }}
             initialDelaySeconds: 15
             timeoutSeconds: 5
           readinessProbe:
             httpGet:
               path: /healthz
-              port: {{ .Values.port}}
+              port: {{ .Values.port }}
             initialDelaySeconds: 10
             timeoutSeconds: 5
           ports:
-            - containerPort: {{ .Values.port}}
+            - containerPort: {{ .Values.port }}
               name: {{ .Values.name }}
           volumeMounts:
             - name: data
               mountPath: /app/data
           env:
             - name: PORT
-              value: "{{ .Values.port}}"
+              value: "{{ .Values.port }}"
             - name: JWT_SECRET
               valueFrom:
                 secretKeyRef:
@@ -73,5 +73,5 @@ spec:
   type: ClusterIP
   ports:
     - name: {{ .Values.name }}
-      port: {{ .Values.port}}
-      targetPort: {{ .Values.port}}
+      port: {{ .Values.port }}
+      targetPort: {{ .Values.port }}

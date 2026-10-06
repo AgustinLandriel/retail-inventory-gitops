@@ -1,5 +1,6 @@
 name: orders-service
 port: 3003
+catalogServiceUrl: "http://catalog-service:3002"
 image:
   repository: 325503636955.dkr.ecr.us-east-2.amazonaws.com/repone-orders-service
   tag: latest

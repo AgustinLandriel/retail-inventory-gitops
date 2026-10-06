@@ -56,7 +56,7 @@ spec:
                   name: auth-service-secret
                   key: JWT_SECRET
             - name: CATALOG_SERVICE_URL
-              value: "http://catalog-service:3002"
+              value: "{{ .Values.catalogServiceUrl }}"
 
       volumes:
         - name: data
