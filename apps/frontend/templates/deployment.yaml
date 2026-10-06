@@ -1,9 +1,9 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: frontend
+  name: {{ .Values.name }}
   labels:
-    name: frontend
+    name: {{ .Values.name }}
   namespace: repone
 spec:
   replicas: 1
@@ -11,15 +11,15 @@ spec:
     type: RollingUpdate
   selector:
     matchLabels:
-      app: frontend
+      app: {{ .Values.name }}
   template:
     metadata:
       labels:
-        app: frontend
+        app: {{ .Values.name }}
     spec:
       containers:
-        - image: ipedrazas/docmock
-          name: frontend
+        - image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          name: {{ .Values.name }}
           resources:
             requests:
               cpu: "50m"
@@ -30,30 +30,30 @@ spec:
           livenessProbe:
             httpGet:
               path: /
-              port: 80
+              port: {{ .Values.port }}
             initialDelaySeconds: 10
             timeoutSeconds: 5
           readinessProbe:
             httpGet:
               path: /
-              port: 80
+              port: {{ .Values.port }}
             initialDelaySeconds: 5
             timeoutSeconds: 5
           ports:
-            - containerPort: 80
-              name: frontend
+            - containerPort: {{ .Values.port }}
+              name: {{ .Values.name }}
 
 ---
 kind: Service
 apiVersion: v1
 metadata:
-  name: frontend
+  name: {{ .Values.name }}
   namespace: repone
 spec:
   selector:
-    app: frontend
+    app: {{ .Values.name }}
   type: ClusterIP
   ports:
-    - name: frontend
-      port: 80
-      targetPort: 80
+    - name: {{ .Values.name }}
+      port: {{ .Values.port }}
+      targetPort: {{ .Values.port }}

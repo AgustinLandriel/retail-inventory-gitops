@@ -1,0 +1,5 @@
+name: frontend
+port: 80
+image:
+  repository: 325503636955.dkr.ecr.us-east-2.amazonaws.com/repone-frontend-service
+  tag: latest
