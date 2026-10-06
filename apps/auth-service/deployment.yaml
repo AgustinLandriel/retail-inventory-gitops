@@ -4,6 +4,7 @@ metadata:
   name: auth-service
   labels:
     name: auth-service
+  namespace: repone
 spec:
   replicas: 1
   strategy:
@@ -46,6 +47,14 @@ spec:
           volumeMounts:
             - name: data
               mountPath: /app/data
+          env:
+            - name: PORT
+              value: "3001"
+            - name: JWT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: auth-service-secret
+                  key: JWT_SECRET
 
       volumes:
         - name: data
@@ -57,6 +66,7 @@ kind: Service
 apiVersion: v1
 metadata:
   name: auth-service
+  namespace: repone
 spec:
   selector:
     app: auth-service
