@@ -1,5 +1,26 @@
+## DEPLOYMENT
 name: catalog-service
-port: 3002
+replicas: 1
+strategy: Recreate
+persistence:
+  enabled: true
+  mountPath: /app/data
 image:
   repository: 325503636955.dkr.ecr.us-east-2.amazonaws.com/repone-catalog-service
   tag: latest
+  pullPolicy: Always
+port: 3002
+resources:
+  requests:
+    cpu: "50m"
+    memory: "64Mi"
+  limits:
+    cpu: "200m"
+    memory: "256Mi"
+probes:
+  path: /healthz
+  liveness:
+    initialDelaySeconds: 5
+  readiness:
+    initialDelaySeconds: 5
+secretName: auth-service-secret

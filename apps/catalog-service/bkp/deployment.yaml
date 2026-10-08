@@ -1,0 +1,77 @@
+# apiVersion: apps/v1
+# kind: Deployment
+# metadata:
+#   name: {{ .Values.name }}
+#   labels:
+#     name: {{ .Values.name }}
+#   namespace: repone
+# spec:
+#   replicas: 1
+#   strategy:
+#     type: Recreate
+#   selector:
+#     matchLabels:
+#       app: {{ .Values.name }}
+#   template:
+#     metadata:
+#       labels:
+#         app: {{ .Values.name }}
+#     spec:
+#       securityContext:
+#         fsGroup: 1000
+#       containers:
+#         - image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+#           name: {{ .Values.name }}
+#           resources:
+#             requests:
+#               cpu: "50m"
+#               memory: "64Mi"
+#             limits:
+#               cpu: "200m"
+#               memory: "256Mi"
+#           livenessProbe:
+#             httpGet:
+#               path: /healthz
+#               port: {{ .Values.port }}
+#             initialDelaySeconds: 15
+#             timeoutSeconds: 5
+#           readinessProbe:
+#             httpGet:
+#               path: /healthz
+#               port: {{ .Values.port }}
+#             initialDelaySeconds: 10
+#             timeoutSeconds: 5
+#           ports:
+#             - containerPort: {{ .Values.port }}
+#               name: {{ .Values.name }}
+#           volumeMounts:
+#             - name: data
+#               mountPath: /app/data
+#           env:
+#             - name: PORT
+#               value: "{{ .Values.port }}"
+#             - name: JWT_SECRET
+#               valueFrom:
+#                 secretKeyRef:
+#                   name: auth-service-secret
+#                   key: JWT_SECRET
+
+#       volumes:
+#         - name: data
+#           persistentVolumeClaim:
+#             claimName: {{ .Values.name }}-pvc
+
+# ---
+# kind: Service
+# apiVersion: v1
+# metadata:
+#   name: {{ .Values.name }}
+#   namespace: repone
+# spec:
+#   selector:
+#     app: {{ .Values.name }}
+#   type: ClusterIP
+#   ports:
+#     - name: {{ .Values.name }}
+#       port: {{ .Values.port }}
+#       targetPort: {{ .Values.port }}

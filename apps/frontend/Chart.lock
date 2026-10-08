@@ -1,0 +1,6 @@
+dependencies:
+- name: repone-common
+  repository: file://../repone-common
+  version: 0.1.0
+digest: sha256:b64b52b2e3c3c8117fac3b0a490767ea221da22abf81109f4cbcaf65bede3f4b
+generated: "2026-10-08T17:00:22.855310338-03:00"
