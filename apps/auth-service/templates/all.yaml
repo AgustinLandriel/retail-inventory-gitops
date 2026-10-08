@@ -1,0 +1,3 @@
+{{ include "repone-common.deployment" . }}
+{{ include "repone-common.service" . }}
+{{ include "repone-common.pvc" . }}

@@ -11,7 +11,7 @@ spec:
   selector:
     {{- include "repone-common.selectorLabels" . | nindent 4 }}
   ports:
-    - name: http
+    - name: {{ include "repone-common.name" . }}
       port: {{ .Values.port }}
-      targetPort: http
+      targetPort: {{ .Values.port }}
 {{- end }}

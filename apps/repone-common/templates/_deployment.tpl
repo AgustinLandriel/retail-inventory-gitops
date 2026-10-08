@@ -9,7 +9,7 @@ metadata:
 spec:
   replicas: {{ .Values.replicas | default 1 }}
   strategy:
-    type: {{ .Values.strategy | default "Recreate" }}
+    type: {{ .Values.strategy }}
   selector:
     matchLabels:
       {{- include "repone-common.selectorLabels" . | nindent 6 }}
@@ -25,7 +25,7 @@ spec:
       containers:
         - name: {{ include "repone-common.name" . }}
           image: "{{ .Values.image.repository }}:{{ required "image.tag es obligatorio" .Values.image.tag }}"
-          imagePullPolicy: {{ .Values.image.pullPolicy | default "IfNotPresent" }}
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
           ports:
             - name: {{ include "repone-common.name" . }}
               containerPort: {{ .Values.port }}
