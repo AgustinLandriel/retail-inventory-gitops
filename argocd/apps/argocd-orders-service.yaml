@@ -1,0 +1,22 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: orders-service
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/AgustinLandriel/retail-inventory-gitops.git
+    targetRevision: main
+    path: apps/repone-chart
+    helm:
+      valueFiles:
+        - values.yaml
+        - values/orders-service.yaml
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: repone
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
