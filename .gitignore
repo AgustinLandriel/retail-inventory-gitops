@@ -1,1 +1,4 @@
 apps/*/charts/
+
+# Secrets locales: nunca se versionan
+secrets-local/

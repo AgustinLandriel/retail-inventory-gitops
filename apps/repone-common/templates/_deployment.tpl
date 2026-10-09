@@ -18,6 +18,10 @@ spec:
       labels:
         {{- include "repone-common.selectorLabels" . | nindent 8 }}
     spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
       {{- if .Values.persistence.enabled }}
       securityContext:
         fsGroup: 1000
