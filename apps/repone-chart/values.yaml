@@ -1,0 +1,29 @@
+replicas: 1
+strategy: Recreate
+image:
+  repository: ""
+  tag: latest
+  pullPolicy: IfNotPresent
+
+imagePullSecrets:
+  - name: ecr-pull-secret
+
+resources:
+  requests:
+    cpu: "50m"
+    memory: "64Mi"
+  limits:
+    cpu: "200m"
+    memory: "256Mi"
+
+probes:
+  path: /healthz
+  liveness:
+    initialDelaySeconds: 10
+  readiness:
+    initialDelaySeconds: 10
+
+persistence:
+  enabled: true
+  mountPath: /app/data
+  size: 1Gi

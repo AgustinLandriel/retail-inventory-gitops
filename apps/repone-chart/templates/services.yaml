@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "repone-chart.name" . }}
+  namespace: {{ include "repone-chart.namespace" . }}
+  labels:
+    {{- include "repone-chart.labels" . | nindent 4 }}
+spec:
+  type: ClusterIP
+  selector:
+    {{- include "repone-chart.selectorLabels" . | nindent 4 }}
+  ports:
+    - name: {{ include "repone-chart.name" . }}
+      port: {{ .Values.port }}
+      targetPort: {{ .Values.port }}

@@ -1,0 +1,10 @@
+name: frontend
+port: 80
+strategy: RollingUpdate
+persistence:
+  enabled: false
+probes:
+  path: /
+image:
+  repository: 325503636955.dkr.ecr.us-east-2.amazonaws.com/repone-frontend-service
+  tag: latest

@@ -1,0 +1,16 @@
+{{- if .Values.persistence.enabled }}
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ include "repone-chart.name" . }}-pvc
+  namespace: {{ include "repone-chart.namespace" . }}
+  labels:
+    {{- include "repone-chart.labels" . | nindent 4 }}
+spec:
+  accessModes:
+    - ReadWriteOnce
+  volumeMode: Filesystem
+  resources:
+    requests:
+      storage: {{ .Values.persistence.size }}
+{{- end }}      
