@@ -6,5 +6,5 @@ persistence:
 probes:
   path: /
 image:
-  repository: 325503636955.dkr.ecr.us-east-2.amazonaws.com/repone-frontend-service
+  repository: 325503636955.dkr.ecr.us-east-2.amazonaws.com/repone-frontend
   tag: latest
