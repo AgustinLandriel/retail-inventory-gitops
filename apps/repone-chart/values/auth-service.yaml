@@ -3,4 +3,4 @@ port: 3001
 secretName: auth-service-secret
 image:
   repository: 325503636955.dkr.ecr.us-east-2.amazonaws.com/repone-auth-service
-  tag: latest
+  tag: a6ed8f073ca04bbe3d9401f3e2dd728aebd49d07
