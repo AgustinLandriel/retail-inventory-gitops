@@ -7,7 +7,7 @@ spec:
   project: default
   source:
     repoURL: https://github.com/AgustinLandriel/retail-inventory-gitops.git
-    targetRevision: main
+    targetRevision: master
     path: argocd/apps
     directory:
       recurse: false
