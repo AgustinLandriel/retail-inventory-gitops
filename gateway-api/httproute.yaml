@@ -10,18 +10,6 @@ spec:
     - name: repone-gateway
   rules:
     - matches:
-        - path: { type: PathPrefix, value: /api/auth }
-      backendRefs:
-        - { name: auth-service, port: 3001 }
-    - matches:
-        - path: { type: PathPrefix, value: /api/catalog }
-      backendRefs:
-        - { name: catalog-service, port: 3002 }
-    - matches:
-        - path: { type: PathPrefix, value: /api/orders }
-      backendRefs:
-        - { name: orders-service, port: 3003 }
-    - matches:
         - path: { type: PathPrefix, value: / }
       backendRefs:
         - { name: frontend, port: 80 }
