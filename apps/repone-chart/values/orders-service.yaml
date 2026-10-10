@@ -3,7 +3,7 @@ port: 3003
 secretName: auth-service-secret
 image:
   repository: 325503636955.dkr.ecr.us-east-2.amazonaws.com/repone-orders-service
-  tag: latest
+  tag: d7b6cd8fb6d9294b5843e92bc3c7cb69951c7f4a
 env:
   - name: CATALOG_SERVICE_URL
     value: http://catalog-service:3002
