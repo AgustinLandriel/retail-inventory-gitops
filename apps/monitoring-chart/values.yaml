@@ -1,0 +1,32 @@
+# No lo usamos todavía, ahorra RAM
+alertmanager:
+  enabled: false
+
+# En k3s estos componentes corren embebidos en un solo proceso,
+# si no se desactivan aparecen targets "down" permanentes
+kubeEtcd:
+  enabled: false
+kubeScheduler:
+  enabled: false
+kubeControllerManager:
+  enabled: false
+kubeProxy:
+  enabled: false
+
+prometheus:
+  prometheusSpec:
+    retention: 3d
+    resources:
+      requests:
+        cpu: 100m
+        memory: 512Mi
+      limits:
+        memory: 1Gi
+
+grafana:
+  resources:
+    requests:
+      cpu: 50m
+      memory: 128Mi
+    limits:
+      memory: 256Mi
