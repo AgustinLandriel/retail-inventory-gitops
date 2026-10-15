@@ -24,9 +24,9 @@ prometheus:
         memory: 1Gi
 
 grafana:
+  env:
+    GF_PLUGINS_PREINSTALL_DISABLED: "true" # no baja 18 plugins de grafana.com
+    GF_DATABASE_WAL: "true" # SQLite en modo WAL, menos locks
   resources:
-    requests:
-      cpu: 50m
-      memory: 128Mi
-    limits:
-      memory: 256Mi
+    requests: { cpu: 50m, memory: 128Mi }
+    limits: { memory: 384Mi }
