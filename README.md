@@ -1,6 +1,6 @@
 # retail-inventory-gitops
 
-Repositorio GitOps de **Reponé**. Contiene el chart de Helm de los microservicios, las `Application` de ArgoCD que los sincronizan con el cluster k3s y la configuración de entrada (Gateway API + Traefik). El cluster refleja lo que hay en la rama `master`.
+Repositorio GitOps de **Reponé**. Contiene el chart de Helm de los microservicios, las `Application` de ArgoCD que los sincronizan con el cluster k3s, la configuración de entrada (Gateway API + Traefik) y el stack de monitoreo (Prometheus + Grafana). El cluster refleja lo que hay en la rama `master`.
 
 ## Repositorios relacionados
 
@@ -20,14 +20,17 @@ Repositorio GitOps de **Reponé**. Contiene el chart de Helm de los microservici
 │   │   ├── values.yaml        # valores por defecto
 │   │   └── values/            # un archivo por servicio (nombre, puerto, imagen, tag)
 │   ├── repone-common/         # library chart (en migración, ver más abajo)
-│   └── <servicio>/            # charts que consumen repone-common (todavía sin uso)
+│   ├── <servicio>/            # charts que consumen repone-common (todavía sin uso)
+│   └── monitoring-chart/
+│       └── values.yaml        # valores de kube-prometheus-stack (no es un chart, solo values)
 ├── argocd/
 │   ├── app-of-apps.yaml       # Application raíz: crea las demás
-│   └── apps/                  # una Application por servicio
+│   └── apps/                  # una Application por servicio + monitoring
 └── gateway-api/               # entrada al cluster
     ├── traefik-config.yaml    # habilita el provider de Gateway API en Traefik
-    ├── gateway.yaml           # listener HTTP
-    └── httproute.yaml         # hostname y reglas hacia el frontend
+    ├── gateway.yaml           # listener HTTP compartido (acepta rutas de cualquier namespace)
+    ├── httproute.yaml         # repone.landriel.site → frontend
+    └── httproute-grafana.yaml # grafana.repone.landriel.site → Grafana
 ```
 
 Un mismo chart (`repone-chart`) sirve a los 4 servicios. Cada `Application` de ArgoCD lo usa con su propio archivo de valores:
@@ -74,6 +77,7 @@ Requisitos: k3s corriendo, ArgoCD instalado en el namespace `argocd` y el namesp
    ```bash
    kubectl apply -f gateway-api/gateway.yaml
    kubectl apply -f gateway-api/httproute.yaml
+   kubectl apply -f gateway-api/httproute-grafana.yaml   # después de que ArgoCD cree el namespace monitoring
    ```
 
 5. Verificar:
@@ -81,16 +85,46 @@ Requisitos: k3s corriendo, ArgoCD instalado en el namespace `argocd` y el namesp
    ```bash
    kubectl get applications -n argocd      # Synced / Healthy
    kubectl get pods,svc -n repone          # 4 servicios corriendo
-   kubectl get httproute -n repone         # ResolvedRefs=True
+   kubectl get httproute -A                # ResolvedRefs=True (repone y monitoring)
+   kubectl get pods -n monitoring          # Prometheus, Grafana, operator, exporters
    ```
+
+La `Application` `monitoring` la crea la app raíz junto con las de los servicios (ver [Monitoreo](#monitoreo)).
 
 ## Cómo se accede
 
-La app se publica en `repone.landriel.site` (HTTP).
+Todo entra por **Traefik** (el que trae k3s) usando **Gateway API** en lugar de `Ingress`. Hay dos hostnames sobre HTTP:
 
-- **DNS:** registro `A` `repone` → IP del nodo, en modo *DNS only*.
-- **Gateway:** `repone-gateway` escucha en el puerto `8000`, que es el entrypoint interno `web` de Traefik (el Service lo expone como `80`).
-- **Rutas:** una sola regla hacia el `frontend`. Su nginx proxea `/api/auth`, `/api/catalog` y `/api/orders` a los backends por DNS interno del cluster, así que los backends no se exponen y no hay CORS.
+| Hostname | Namespace de la ruta | Destino |
+|---|---|---|
+| `repone.landriel.site` | `repone` | Service `frontend` (puerto 80) |
+| `grafana.repone.landriel.site` | `monitoring` | Service `monitoring-grafana` (puerto 80) |
+
+- **DNS:** registros `A` `repone` y `grafana.repone` → IP del nodo, en modo *DNS only*.
+- **Traefik:** `traefik-config.yaml` es un `HelmChartConfig` que activa `providers.kubernetesGateway`. Con eso Traefik crea la `GatewayClass` `traefik`.
+- **Gateway:** un único `repone-gateway` (namespace `repone`) escucha en el puerto `8000`, que es el entrypoint interno `web` de Traefik (el Service lo expone como `80`). Tiene `allowedRoutes.namespaces.from: All`, así que acepta `HTTPRoute` de otros namespaces, como `monitoring`.
+- **Rutas:** cada `HTTPRoute` vive en el namespace de su backend y se engancha al Gateway con `parentRefs` (la de Grafana indica `namespace: repone`). Como la ruta y el Service están en el mismo namespace, no hace falta `ReferenceGrant`.
+- **Frontend:** su nginx proxea `/api/auth`, `/api/catalog` y `/api/orders` a los backends por DNS interno del cluster, así que los backends no se exponen y no hay CORS.
+
+## Monitoreo
+
+`argocd/apps/monitoring.yaml` despliega **kube-prometheus-stack** (Prometheus, Grafana, operator, node-exporter, kube-state-metrics) en el namespace `monitoring`. Usa dos fuentes (multi-source): el chart oficial de `prometheus-community` en la versión `92.3.1`, y este repo como `ref: values` para leer `apps/monitoring-chart/values.yaml`. El namespace se crea con `CreateNamespace=true` y se usa `ServerSideApply=true` por el tamaño de los CRDs.
+
+Ajustes en `values.yaml`, pensados para un nodo chico:
+
+- **Alertmanager** desactivado (no se usa todavía, ahorra RAM).
+- **etcd, scheduler, controller-manager y kube-proxy** desactivados: en k3s corren embebidos en un solo proceso y generarían targets *down* permanentes.
+- **Prometheus:** retención de 3 días, `requests` 100m CPU / 512Mi y `limit` de 1Gi de memoria.
+- **Grafana:** `requests` 50m / 128Mi y `limit` 384Mi. `GF_PLUGINS_PREINSTALL_DISABLED` evita bajar plugins de grafana.com al arrancar, y SQLite corre en modo WAL (menos locks).
+
+**Acceso a Grafana:** `http://grafana.repone.landriel.site`. El usuario es `admin` y la contraseña la genera el chart en el secret `monitoring-grafana`:
+
+```bash
+kubectl get secret monitoring-grafana -n monitoring \
+  -o jsonpath='{.data.admin-password}' | base64 -d
+```
+
+Los dashboards de Kubernetes (nodos, pods, namespaces) vienen incluidos en el chart. Las métricas propias de los servicios (`/metrics`) todavía **no** se scrapean: falta definir los `ServiceMonitor` en el chart de la app.
 
 ## Secrets
 
@@ -127,4 +161,5 @@ Si un pod queda en `ImagePullBackOff`, casi siempre es este secret vencido. Desp
 - Las imágenes se referencian por tag inmutable (SHA del commit), nunca `latest`. Los tags de ECR también son inmutables: no se puede volver a subir un SHA ya publicado, así que un build se repite solo con un commit nuevo o con *Re-run failed jobs*.
 - La rama de este repo es `master` (el `targetRevision` de todas las `Application`). El repo de la app usa `main`.
 - Un servicio por archivo en `apps/repone-chart/values/` y una `Application` por servicio en `argocd/apps/`.
-- Todos los recursos de la app se despliegan en el namespace `repone`.
+- Los recursos de la app se despliegan en el namespace `repone` y los de monitoreo en `monitoring`.
+- Las rutas de entrada se definen con `HTTPRoute` (Gateway API), no con `Ingress`, y viven en el namespace de su backend.
